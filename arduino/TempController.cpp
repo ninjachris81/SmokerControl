@@ -18,24 +18,30 @@ void TempController::init() {
   dht = new DHT(PIN_DHT11, DHT11);
   dht->begin();
 
+  outsideHumidity.init(10, 0);
+  outsideTemperature.init(10, 0);
+
   insideTemp.init(10, 0);
   meatTemp.init(10, 0);
 }
 
 void TempController::update() {
-  outsideHumidity = dht->readHumidity();
-  outsideTemperature = dht->readTemperature();
+  float f = dht->readHumidity();
+  if (!isnan(f)) outsideHumidity.pushValue(f);
+  
+  f = dht->readTemperature();
+  if (!isnan(f)) outsideTemperature.pushValue(f);
 
   insideTemp.pushValue(taskManager->getTask<IOController*>(IO_CONTROLLER)->analogRead(CHANNEL_INSIDE_TEMP));
   meatTemp.pushValue(taskManager->getTask<IOController*>(IO_CONTROLLER)->analogRead(CHANNEL_MEAT_TEMP));
 }
 
 float TempController::getOutsideHumidity() {
-  return outsideHumidity;
+  return outsideHumidity.getValue();
 }
 
 float TempController::getOutsideTemperature() {
-  return outsideTemperature;
+  return outsideTemperature.getValue();
 }
 
 float TempController::getInsideTemperature() {

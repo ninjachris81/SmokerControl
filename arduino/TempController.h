@@ -24,11 +24,11 @@ public:
   float getMeatTemperature();
 
 private:
-  float outsideHumidity = 0.0;
-  float outsideTemperature = 0.0;
-
   DHT *dht;
 
+  SmoothValue outsideHumidity;
+  SmoothValue outsideTemperature;
+  
   SmoothValue insideTemp;
   SmoothValue meatTemp;
 };

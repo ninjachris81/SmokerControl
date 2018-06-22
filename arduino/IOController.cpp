@@ -14,6 +14,7 @@ void IOController::init() {
 }
 
 int IOController::analogRead(uint8_t channel) {
-  mux->channel(channel);
-  return analogRead(PIN_ANALOG_MUX);
+  //mux->channel(channel);
+  //return analogRead(PIN_ANALOG_MUX);
+  return 0;
 }
