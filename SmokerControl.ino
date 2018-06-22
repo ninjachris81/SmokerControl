@@ -7,6 +7,8 @@
 #include "WifiController.h"
 #include "SmokerController.h"
 #include "DisplayController.h"
+#include "SmokeGenerator.h"
+#include "IOController.h"
 
 TaskManager tm;
 
@@ -14,6 +16,8 @@ TempController tempController;
 WifiController wifiController;
 SmokerController smokerController;
 DisplayController displayController;
+SmokeGenerator smokeGenerator;
+IOController ioController;
 
 void setup(void) {
   LOG_INIT();
@@ -22,6 +26,8 @@ void setup(void) {
   tm.registerTask(&wifiController);
   tm.registerTask(&smokerController);
   tm.registerTask(&displayController);
+  tm.registerTask(&smokeGenerator);
+  tm.registerTask(&ioController);
 
   tm.init();
   LOG_PRINTLN(F("Init complete"));

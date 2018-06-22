@@ -4,6 +4,11 @@
 #include "Credentials.h"
 #include "TaskIDs.h"
 
+#include "TempController.h"
+#include "SmokerController.h"
+
+#include "TaskIDs.h"
+
 WifiController::WifiController() : AbstractTask() {
   server = new WiFiServer(SERVER_PORT);
 }
@@ -74,6 +79,23 @@ void WifiController::update() {
       connectedClients++;
     }
   }
+
+  if (lastBroadcast==0 || millis() - lastBroadcast > BROADCAST_INTERVAL_MS) {
+    broadcastData(F("OHU"), taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getOutsideHumidity()); 
+    broadcastData(F("OTE"), taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getOutsideTemperature()); 
+    broadcastData(F("ITE"), taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature()); 
+    broadcastData(F("MTT"), taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature()); 
+
+    SmokerController::SmokerProfile profile = taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getCurrentProfile(); 
+    broadcastData(F("PNA"), profile.name); 
+    broadcastData(F("PIT"), profile.insideTemp); 
+    broadcastData(F("PMT"), profile.meatTargetTemp); 
+    broadcastData(F("PAS"), (unsigned long) (profile.autoStop ? 1 : 0));
+
+    broadcastData(F("DUR"), (unsigned long) (taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getDuration() / 1000));     // in sec
+    
+    lastBroadcast = millis();
+  }
 }
 
 bool WifiController::isConnected() {
@@ -84,7 +106,19 @@ uint8_t WifiController::getConnectedClients() {
   return connectedClients;
 }
 
-void WifiController::broadcastData(String data) {
+void WifiController::broadcastData(String dataId, unsigned long value) {
+  _broadcastData(dataId + String(value));
+}
+
+void WifiController::broadcastData(String dataId, float value) {
+  _broadcastData(dataId + String(value));
+}
+
+void WifiController::broadcastData(String dataId, String value) {
+  _broadcastData(dataId + value);
+}
+
+void WifiController::_broadcastData(String data) {
   if (data.length()==0) return;
   
   for(uint8_t i = 0; i < MAX_SRV_CLIENTS; i++){
@@ -94,3 +128,4 @@ void WifiController::broadcastData(String data) {
     }
   }
 }
+

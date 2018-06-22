@@ -1,0 +1,3 @@
+#define CHANNEL_INSIDE_TEMP 0
+#define CHANNEL_MEAT_TEMP 1
+

@@ -2,7 +2,7 @@
 #define TEMPCONTROLLER_H
 
 #include <AbstractIntervalTask.h>
-#include <AnalogTempSensor.h>
+#include <SmoothValue.h>
 
 #include "Debug.h"
 #include "Pins.h"
@@ -21,16 +21,16 @@ public:
   float getOutsideHumidity();
   float getOutsideTemperature();
   float getInsideTemperature();
+  float getMeatTemperature();
 
 private:
   float outsideHumidity = 0.0;
   float outsideTemperature = 0.0;
-  
-  float insideTemperature = 0.0;
 
   DHT *dht;
 
-  AnalogTempSensor *analogTemp; 
+  SmoothValue insideTemp;
+  SmoothValue meatTemp;
 };
 
 
