@@ -92,6 +92,7 @@ void WifiController::update() {
     broadcastData(F("PMT"), profile.meatTargetTemp); 
     broadcastData(F("PAS"), (unsigned long) (profile.autoStop ? 1 : 0));
 
+    broadcastData(F("RUN"), (unsigned long) (taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->isRunning() ? 1 : 0));
     broadcastData(F("DUR"), (unsigned long) (taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getDuration() / 1000));     // in sec
     
     lastBroadcast = millis();

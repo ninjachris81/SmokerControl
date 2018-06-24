@@ -55,6 +55,10 @@ uint64_t SmokerController::getDuration() {
   return millis() - startTime;
 }
 
+bool SmokerController::isRunning() {
+  return this->isRunning;
+}
+
 uint8_t SmokerController::getProfileCount() {
   return PROFILE_COUNT;
 }

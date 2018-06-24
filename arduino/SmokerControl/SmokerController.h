@@ -42,6 +42,8 @@ public:
 
   String getProfileName(uint8_t smokerProfile);
 
+  bool isRunning();
+
   SmokerProfile getCurrentProfile();
 
 private:
