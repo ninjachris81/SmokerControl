@@ -3,6 +3,7 @@
 
 #include "TempController.h"
 #include "IOController.h"
+#include "BuzzerController.h"
 
 #include "SmokeGenerator.h"
 #include "TaskIDs.h"
@@ -18,15 +19,15 @@ SmokerController::SmokerController() : AbstractIntervalTask(1000) {
 }
 
 void SmokerController::init() {
-  pinMode(PIN_HEATER, OUTPUT);
-
   heaterState.init(PROP_HEATER, false, HEATER_DELAY_MS);
+  heaterState.registerValueChangeListener(this);
 }
 
 void SmokerController::update() {
-  if (mIsRunning) {
-    heaterState.setValue(currentProfile.insideTemp>taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature());
+  heaterState.update();
+  heaterState.setValue(currentProfile.insideTemp>taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature());
 
+  if (mIsRunning) {
     // check meat target temp
     if (taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature()>=currentProfile.meatTargetTemp) {
       // target temp reached
@@ -34,9 +35,12 @@ void SmokerController::update() {
         stop();
       }
     }
-  } else {
-    heaterState.setValue(false);
   }
+}
+
+bool SmokerController::isPreheating() {
+  if (mIsRunning) return false;
+  return heaterState.getValue();
 }
 
 void SmokerController::start() {

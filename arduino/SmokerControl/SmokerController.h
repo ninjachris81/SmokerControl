@@ -38,6 +38,8 @@ public:
 
   bool isRunning();
 
+  bool isPreheating();
+
   SmokerProfile getCurrentProfile();
 
 private:

@@ -7,6 +7,7 @@
 #include "DisplayController.h"
 #include "SmokeGenerator.h"
 #include "IOController.h"
+#include "BuzzerController.h"
 
 TaskManager tm;
 
@@ -15,6 +16,7 @@ SmokerController smokerController;
 DisplayController displayController;
 SmokeGenerator smokeGenerator;
 IOController ioController;
+BuzzerController buzzerController;
 
 void setup(void) {
   LOG_INIT();
@@ -24,12 +26,15 @@ void setup(void) {
   tm.registerTask(&displayController);
   tm.registerTask(&smokeGenerator);
   tm.registerTask(&ioController);
+  tm.registerTask(&buzzerController);
 
   tm.init();
 
   LOG_PRINTLN(F("Init complete"));
 
-  smokerController.start();
+  buzzerController.beep(500);
+
+  //smokerController.start();
 }
 
 void loop()

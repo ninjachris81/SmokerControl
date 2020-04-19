@@ -27,14 +27,14 @@ void DisplayController::update() {
   
   switch(currentScreen) {
     case SCREEN_HOME:
-      //display.setLine(0, "Clients:    " + String(taskManager->getTask<WifiController*>(WIFI_CONTROLLER)->getConnectedClients()));
+      display.setLine(0, F("Smoker Control"));
       display.setLine(1, alignText("InsideTemp1:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature1()) + " C"));
       display.setLine(2, alignText("InsideTemp2:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature2()) + " C"));
       display.setLine(3, alignText("MeatTemp1:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature1()) + " C"));
       display.setLine(4, alignText("MeatTemp2:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature2()) + " C"));
       display.setLine(5, F("---------------------"));
-      display.setLine(6, String("Ready to start"));
-      display.setLine(7, F(""));
+      display.setLine(6, taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->isPreheating() ? F("Preheating") : F("Ready to start"));
+      display.setLine(7, F("---------------------"));
       break;
     case SCREEN_ONGOING:
       display.setLine(0, taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getCurrentProfile().name);
