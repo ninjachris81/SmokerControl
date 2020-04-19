@@ -2,22 +2,22 @@
 #define IOCONTROLLER_H
 
 #include <AbstractIdleTask.h>
-#include <CD74HC4067.h>
 
 #include "Debug.h"
 #include "Pins.h"
 
+#define HEATING_RELAY 0
+
 class IOController : public AbstractIdleTask {
 public:
   IOController();
-  ~IOController();
   
   void init();
 
-  int analogRead(uint8_t channel);
+  void setState(uint8_t index, bool on);
   
 private:
-  CD74HC4067 *mux;
+
 };
 
 

@@ -6,6 +6,8 @@
 #include "ssd1306_text.h"
 #include "Debug.h"
 
+#define CHARS_WIDTH 21
+
 class DisplayController : public AbstractIntervalTask {
   public:
     DisplayController();
@@ -17,13 +19,13 @@ class DisplayController : public AbstractIntervalTask {
 private:
   enum SCREEN_ID {
     SCREEN_HOME,
-    SCREEN_START
+    SCREEN_ONGOING
   };
 
   SSD1306Text display;
   SCREEN_ID currentScreen = SCREEN_HOME;
 
-  uint8_t currentLine = 0;
+  String alignText(String left, String right, uint8_t charsWidth = CHARS_WIDTH);
 
 };
 

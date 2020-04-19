@@ -7,8 +7,6 @@
 #include "Pins.h"
 #include "BehaviorProperty.h"
 
-#define PROFILE_COUNT 1
-
 #define PROP_HEATER 0
 
 #define TARGET_TEMP_TOLERANCE 5.0
@@ -30,17 +28,13 @@ public:
 
   void update();
 
-  void onPropertyValueChange(uint8_t id, bool value);
+  void onPropertyValueChange(uint8_t id, bool newValue, bool oldValue);
 
-  void start(uint8_t smokerProfile);
+  void start();
 
   void stop();
 
   uint64_t getDuration();
-
-  uint8_t getProfileCount();
-
-  String getProfileName(uint8_t smokerProfile);
 
   bool isRunning();
 
@@ -48,13 +42,12 @@ public:
 
 private:
   uint64_t startTime;
-  uint8_t currentProfile = 0;
 
-  bool isRunning = false;
+  bool mIsRunning = false;
   
   BehaviorProperty<bool> heaterState;
   
-  SmokerProfile smokerProfiles[PROFILE_COUNT];
+  SmokerProfile currentProfile;
 };
 
 

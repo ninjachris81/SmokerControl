@@ -2,15 +2,19 @@
 #include <LogHelper.h>
 
 #include "TempController.h"
+#include "IOController.h"
+
 #include "SmokeGenerator.h"
 #include "TaskIDs.h"
 
 SmokerController::SmokerController() : AbstractIntervalTask(1000) {
-  // Pulled Pork
-  smokerProfiles[0].name = F("Pulled Pork");
-  smokerProfiles[0].insideTemp = 110;
-  smokerProfiles[0].meatTargetTemp = 80;
-  smokerProfiles[0].autoStop = true;
+  // Pulled Pork as default
+  currentProfile.name = F("Pulled Pork");
+  currentProfile.insideTemp = 110;
+  currentProfile.meatTargetTemp = 80;
+  currentProfile.autoStop = true;
+
+  startTime = 0;
 }
 
 void SmokerController::init() {
@@ -20,13 +24,13 @@ void SmokerController::init() {
 }
 
 void SmokerController::update() {
-  if (isRunning) {
-    heaterState.setValue(smokerProfiles[currentProfile].insideTemp>taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature());
+  if (mIsRunning) {
+    heaterState.setValue(currentProfile.insideTemp>taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature());
 
     // check meat target temp
-    if (taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature()>=smokerProfiles[currentProfile].meatTargetTemp) {
+    if (taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature()>=currentProfile.meatTargetTemp) {
       // target temp reached
-      if (smokerProfiles[currentProfile].autoStop) {
+      if (currentProfile.autoStop) {
         stop();
       }
     }
@@ -35,52 +39,37 @@ void SmokerController::update() {
   }
 }
 
-void SmokerController::start(uint8_t smokerProfile) {
+void SmokerController::start() {
   LOG_PRINT(F("Starting with profile "));
-  LOG_PRINTLN(smokerProfiles[smokerProfile].name);
+  LOG_PRINTLN(currentProfile.name);
   
-  currentProfile = smokerProfile;
   startTime = millis();
-  isRunning = true;
+  mIsRunning = true;
 }
 
 void SmokerController::stop() {
   LOG_PRINTLN(F("Stopping"));
   
-  isRunning = false;
+  mIsRunning = false;
 }
 
 uint64_t SmokerController::getDuration() {
-  if (isRunning) return 0;
+  if (!mIsRunning) return 0;
   return millis() - startTime;
 }
 
 bool SmokerController::isRunning() {
-  return this->isRunning;
-}
-
-uint8_t SmokerController::getProfileCount() {
-  return PROFILE_COUNT;
-}
-
-String SmokerController::getProfileName(uint8_t smokerProfile) {
-  return smokerProfiles[smokerProfile].name;
+  return this->mIsRunning;
 }
 
 SmokerController::SmokerProfile SmokerController::getCurrentProfile() {
-  return smokerProfiles[currentProfile];
+  return currentProfile;
 }
 
-void SmokerController::onPropertyValueChange(uint8_t id, bool value) {
-  LOG_PRINT(F("IO set to "));
-  LOG_PRINT(id);
-  LOG_PRINT(F(" to "));
-  LOG_PRINTLN(value);
-  
+void SmokerController::onPropertyValueChange(uint8_t id, bool newValue, bool oldValue) {
   switch(id) {
     case PROP_HEATER:
-      digitalWrite(PIN_HEATER, value ? LOW : HIGH);
+      taskManager->getTask<IOController*>(IO_CONTROLLER)->setState(HEATING_RELAY, newValue);
       break;
   }
 }
-

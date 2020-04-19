@@ -1,20 +1,19 @@
 #include "IOController.h"
+#include <LogHelper.h>
 
 IOController::IOController() : AbstractIdleTask() {
   
 }
 
-IOController::~IOController() {
-  delete mux;
-}
-
 void IOController::init() {
-  mux = new CD74HC4067(PIN_MUX0, PIN_MUX1, PIN_MUX2, PIN_MUX3);
-  pinMode(PIN_ANALOG_MUX, INPUT);
+  pinMode(PIN_HEATER, OUTPUT);
 }
 
-int IOController::analogRead(uint8_t channel) {
-  //mux->channel(channel);
-  //return analogRead(PIN_ANALOG_MUX);
-  return 0;
+void IOController::setState(uint8_t index, bool on) {
+  LOG_PRINT(F("IO set to "));
+  LOG_PRINT(index);
+  LOG_PRINT(F(" to "));
+  LOG_PRINTLN(on);
+  
+  digitalWrite(index, on ? LOW : HIGH);
 }
