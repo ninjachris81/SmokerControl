@@ -32,7 +32,7 @@ void setup(void) {
 
   LOG_PRINTLN(F("Init complete"));
 
-  buzzerController.beep(500);
+  buzzerController.beep();
 
   //smokerController.start();
 }

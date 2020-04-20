@@ -6,6 +6,7 @@
 
 #include "Pins.h"
 #include "BehaviorProperty.h"
+#include "Simulation.h"
 
 #define PROP_HEATER 0
 
@@ -22,6 +23,14 @@ public:
     bool autoStop;
   };
 
+  enum SMOKER_STATUS {
+    STATUS_PREHEATING,
+    STATUS_READY,
+    STATUS_RUNNING,
+    STATUS_TARGET_REACHED,
+    STATUS_FINISHED
+  };
+
   SmokerController();
   
   void init();
@@ -34,22 +43,30 @@ public:
 
   void stop();
 
+  void finish();
+
   uint64_t getDuration();
 
-  bool isRunning();
-
-  bool isPreheating();
+  SMOKER_STATUS getStatus();
 
   SmokerProfile getCurrentProfile();
 
 private:
   uint64_t startTime;
+  uint64_t endTime;
 
-  bool mIsRunning = false;
+  void setStatus(SMOKER_STATUS newState);
+
+  SMOKER_STATUS mStatus = STATUS_PREHEATING;
   
   BehaviorProperty<bool> heaterState;
   
   SmokerProfile currentProfile;
+
+#ifdef IS_SIMULATION
+  uint8_t simulationDelay = 0;
+#endif
+
 };
 
 

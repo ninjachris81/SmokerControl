@@ -2,7 +2,7 @@
 #include <LogHelper.h>
 #include "Pins.h"
 
-BuzzerController::BuzzerController() : AbstractIntervalTask(50) {
+BuzzerController::BuzzerController() : AbstractIntervalTask(BEEP_DURATION_MS) {
 }
 
 void BuzzerController::init() {
@@ -10,20 +10,28 @@ void BuzzerController::init() {
 }
 
 void BuzzerController::update() {
-  if (startTime>0) {
-    if (millis() - startTime > currentDuration) {
-      noTone(PIN_BUZZER);
-      digitalWrite(PIN_BUZZER, HIGH);
-      startTime = 0;
+  if (currentAmountLeft>0) {
+    if (currentIsBeep) {
+      tone(PIN_BUZZER, 1000, BEEP_DURATION_MS);
+    } else {
+      currentAmountLeft--;
     }
+  
+    currentIsBeep = !currentIsBeep;
+    if (currentAmountLeft==0) stop();
   }
 }
 
-void BuzzerController::beep(uint16_t duration) {
-  if (startTime>0) return;    // still active
+void BuzzerController::stop() {
+  noTone(PIN_BUZZER);
+  digitalWrite(PIN_BUZZER, HIGH);
+  currentAmountLeft = 0;
+}
+
+void BuzzerController::beep(uint8_t amount) {
+  if (currentAmountLeft>0) return;
   
-  currentDuration = duration;
-  
-  tone(PIN_BUZZER, 1000, duration);
-  startTime = millis();
+  currentAmountLeft = amount;
+  currentIsBeep = true;
+  updateNow();
 }

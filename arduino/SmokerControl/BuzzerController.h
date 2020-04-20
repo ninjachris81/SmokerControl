@@ -7,6 +7,7 @@
 #include "WProgram.h"
 #endif
 
+#define BEEP_DURATION_MS 500
 
 #include <AbstractIntervalTask.h>
 #include "Pins.h"
@@ -19,11 +20,15 @@ public:
     
     void update();
 
-    void beep(uint16_t duration);
+    void beep(uint8_t amount = 1);
+
+    void stop();
 
 private:
-  uint64_t startTime = 0;
-  uint16_t currentDuration = 0;
+  uint8_t currentAmountLeft = 0;
+
+  bool currentIsBeep = false;
+
 
 };
 

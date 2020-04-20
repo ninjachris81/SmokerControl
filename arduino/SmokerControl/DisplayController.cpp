@@ -19,36 +19,79 @@ void DisplayController::init() {
 }
 
 void DisplayController::update() {
-  if (taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->isRunning()) {
-    currentScreen = SCREEN_ONGOING;
-  } else {
-    currentScreen = SCREEN_HOME;
+  String cStatus;
+  
+  currentLine = 0;
+  
+  switch(taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getStatus()) {
+    case SmokerController::STATUS_PREHEATING:
+      cStatus = F("Preheating");
+      currentScreen = SCREEN_PREHEATING;
+      break;
+    case SmokerController::STATUS_READY:
+      cStatus = F("Ready");
+      currentScreen = SCREEN_ONGOING;
+      break;
+    case SmokerController::STATUS_RUNNING:
+      cStatus = F("Smoking");
+      currentScreen = SCREEN_ONGOING;
+      break;
+    case SmokerController::STATUS_TARGET_REACHED:
+      cStatus = F("Target reached");
+      currentScreen = SCREEN_FINISHED;
+      break;
+    case SmokerController::STATUS_FINISHED:
+      cStatus = F("Finished");
+      currentScreen = SCREEN_FINISHED;
+      break;
+    default:
+      LOG_PRINTLN(F("Unknown status"));
+      break;
   }
   
+  float duration = taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getDuration() / 1000;
+
   switch(currentScreen) {
-    case SCREEN_HOME:
-      display.setLine(0, F("Smoker Control"));
-      display.setLine(1, alignText("InsideTemp1:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature1()) + " C"));
-      display.setLine(2, alignText("InsideTemp2:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature2()) + " C"));
-      display.setLine(3, alignText("MeatTemp1:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature1()) + " C"));
-      display.setLine(4, alignText("MeatTemp2:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature2()) + " C"));
-      display.setLine(5, F("---------------------"));
-      display.setLine(6, taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->isPreheating() ? F("Preheating") : F("Ready to start"));
-      display.setLine(7, F("---------------------"));
+    case SCREEN_PREHEATING:
+      nextLine(alignCenter(F("Smoker Control")));
+      nextLine(F("---------------------"));
+      nextLine(alignCenter(cStatus));
+      nextLine(""); 
+      nextLine(alignText("InsideTemp1:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature1()) + " C"));
+      nextLine(alignText("InsideTemp2:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature2()) + " C"));
+      nextLine(alignText("InsideTmp:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature()) + " C"));
+      nextLine(alignText("InsideTgt:", String(taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getCurrentProfile().insideTemp) + " C"));
       break;
     case SCREEN_ONGOING:
-      display.setLine(0, taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getCurrentProfile().name);
-      display.setLine(1, alignText("InsideTmp:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature()) + " C"));
-      display.setLine(2, alignText("InsideTgt:", String(taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getCurrentProfile().insideTemp) + " C"));
-      display.setLine(3, alignText("MeatTemp:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature()) + " C"));
-      display.setLine(4, alignText("MeatTgt:", String(taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getCurrentProfile().meatTargetTemp) + " C"));
-      display.setLine(5, alignText("MeatDelta:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature() - taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getCurrentProfile().meatTargetTemp) + " C"));
-      float duration = taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getDuration() / 1000;
-      display.setLine(6, alignText("Duration:", String(duration, 0) + " s"));
+      nextLine(alignCenter(taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getCurrentProfile().name));
+      nextLine(F("---------------------"));
+      nextLine(alignText("InsideTmp:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature()) + " C"));
+      nextLine(alignText("InsideTgt:", String(taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getCurrentProfile().insideTemp) + " C"));
+      nextLine(alignText("MeatTemp:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature()) + " C"));
+      nextLine(alignText("MeatTgt:", String(taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getCurrentProfile().meatTargetTemp) + " C"));
+      nextLine(alignText("MeatDelta:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature() - taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getCurrentProfile().meatTargetTemp) + " C"));
+      nextLine(alignText("Duration:", String(duration, 0) + " s"));
       break;
+    case SCREEN_FINISHED:
+      nextLine(alignCenter(taskManager->getTask<SmokerController*>(SMOKER_CONTROLLER)->getCurrentProfile().name));
+      nextLine(F("---------------------"));
+      nextLine(alignCenter(cStatus));
+      nextLine(""); 
+      nextLine(alignText("InsideTmp:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature()) + " C"));
+      nextLine(alignText("MeatTemp:", String(taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature()) + " C"));
+      nextLine(alignText("Duration:", String(duration, 0) + " s"));
+      nextLine(""); 
+      break;
+    default:
+      LOG_PRINTLN(F("Unknown screen"));
   }
   
   display.render();
+}
+
+void DisplayController::nextLine(String t) {
+  display.setLine(currentLine, t);
+  currentLine++;
 }
 
 String DisplayController::alignText(String left, String right, uint8_t charsWidth) {
@@ -62,5 +105,17 @@ String DisplayController::alignText(String left, String right, uint8_t charsWidt
 
   returnStr.concat(right);
   
+  return returnStr;
+}
+
+String DisplayController::alignCenter(String t, uint8_t charsWidth) {
+  String returnStr = "";
+
+  for (uint8_t i=0;i<(charsWidth - t.length()) / 2;i++) {
+    returnStr.concat(" ");
+  }
+
+  returnStr.concat(t);
+
   return returnStr;
 }

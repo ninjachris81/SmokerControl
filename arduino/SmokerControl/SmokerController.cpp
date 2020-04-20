@@ -24,23 +24,65 @@ void SmokerController::init() {
 }
 
 void SmokerController::update() {
-  heaterState.update();
-  heaterState.setValue(currentProfile.insideTemp>taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature());
 
-  if (mIsRunning) {
-    // check meat target temp
-    if (taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature()>=currentProfile.meatTargetTemp) {
-      // target temp reached
-      if (currentProfile.autoStop) {
-        stop();
+  bool setHeaterState = true;
+  
+  switch(mStatus) {
+    case STATUS_PREHEATING:
+#ifdef IS_SIMULATION
+      simulationDelay = 0;
+#endif
+      if (taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature()>=currentProfile.insideTemp) setStatus(STATUS_READY);
+      break;
+    case STATUS_READY:
+#ifdef IS_SIMULATION
+      simulationDelay++;
+      if (simulationDelay>10) start();
+#endif
+      break;
+    case STATUS_RUNNING:
+      // check meat target temp
+      if (taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getMeatTemperature()>=currentProfile.meatTargetTemp) {
+        // target temp reached
+        if (currentProfile.autoStop) {
+          stop();
+        } else {
+          // keep going
+        }
       }
-    }
+#ifdef IS_SIMULATION
+      simulationDelay = 0;
+#endif
+      break;
+    case STATUS_TARGET_REACHED:
+      setHeaterState = false;
+      taskManager->getTask<BuzzerController*>(BUZZER_CONTROLLER)->beep();
+
+#ifdef IS_SIMULATION
+      simulationDelay++;
+      if (simulationDelay>10) finish();
+#endif
+
+      break;    
+    case STATUS_FINISHED:
+      setHeaterState = false;
+      break;
+  }
+
+  heaterState.update();
+  
+  if (setHeaterState) {
+    heaterState.setValue(currentProfile.insideTemp>taskManager->getTask<TempController*>(TEMP_CONTROLLER)->getInsideTemperature());
+  } else {
+    heaterState.setValue(false);
   }
 }
 
-bool SmokerController::isPreheating() {
-  if (mIsRunning) return false;
-  return heaterState.getValue();
+void SmokerController::setStatus(SmokerController::SMOKER_STATUS newState) {
+  LOG_PRINT(F("New status "));
+  LOG_PRINTLN(newState);
+  
+  mStatus = newState;
 }
 
 void SmokerController::start() {
@@ -48,22 +90,28 @@ void SmokerController::start() {
   LOG_PRINTLN(currentProfile.name);
   
   startTime = millis();
-  mIsRunning = true;
+  setStatus(STATUS_RUNNING);
 }
 
 void SmokerController::stop() {
   LOG_PRINTLN(F("Stopping"));
-  
-  mIsRunning = false;
+  endTime = millis();
+  setStatus(STATUS_TARGET_REACHED);
+}
+
+void SmokerController::finish() {
+  LOG_PRINTLN(F("Finishing"));
+  setStatus(STATUS_FINISHED);
 }
 
 uint64_t SmokerController::getDuration() {
-  if (!mIsRunning) return 0;
-  return millis() - startTime;
+  if (mStatus<STATUS_RUNNING) return 0;
+  if (mStatus==STATUS_RUNNING) return millis() - startTime;
+  if (mStatus>STATUS_RUNNING) return endTime - startTime;
 }
 
-bool SmokerController::isRunning() {
-  return this->mIsRunning;
+SmokerController::SMOKER_STATUS SmokerController::getStatus() {
+  return this->mStatus;
 }
 
 SmokerController::SmokerProfile SmokerController::getCurrentProfile() {
